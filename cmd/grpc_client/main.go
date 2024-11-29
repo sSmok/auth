@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
+	"log"
+	"time"
+
 	"github.com/brianvoe/gofakeit"
 	"github.com/fatih/color"
 	descUser "github.com/sSmok/auth/pkg/user_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"log"
-	"time"
 )
 
 const address = "localhost:50500"
@@ -24,6 +25,7 @@ func main() {
 	client := descUser.NewUserV1Client(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
+
 	//=============
 	resp, err := client.Get(ctx, &descUser.GetRequest{Id: 5})
 	if err != nil {

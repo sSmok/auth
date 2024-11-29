@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"net"
+
 	"github.com/brianvoe/gofakeit"
 	descUser "github.com/sSmok/auth/pkg/user_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"log"
-	"net"
 )
 
 const grpcPort = 50500
