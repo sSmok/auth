@@ -21,7 +21,11 @@ func main() {
 	if err != nil {
 		log.Printf("fail to listen: %v\n", err)
 	}
-	defer lis.Close()
+	defer func() {
+		if err := lis.Close(); err != nil {
+			log.Fatalf("listener cannot be closed: %v", err)
+		}
+	}()
 
 	serv := grpc.NewServer()
 	reflection.Register(serv)

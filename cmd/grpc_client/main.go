@@ -20,7 +20,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect to server: %v\n", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Fatalf("listener cannot be closed: %v", err)
+		}
+	}()
 
 	client := descUser.NewUserV1Client(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
