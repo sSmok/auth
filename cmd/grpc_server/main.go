@@ -82,9 +82,9 @@ func (s *server) Update(_ context.Context, req *descUser.UpdateRequest) (*emptyp
 
 	log.Printf("user before update: %+v\n", user)
 
-	user.Info.Name = req.Info.Name.GetValue()
-	user.Info.Email = req.Info.Email.GetValue()
-	user.Info.Role = req.Info.Role
+	user.Info.Name = req.GetInfo().GetName().GetValue()
+	user.Info.Email = req.GetInfo().GetEmail().GetValue()
+	user.Info.Role = req.GetInfo().GetRole()
 	user.UpdatedAt = timestamppb.Now()
 
 	log.Printf("user after update: %+v\n", user)
