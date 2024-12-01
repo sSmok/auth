@@ -44,6 +44,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("db pool connection error: %v", err)
 	}
+	defer pool.Close()
+
 	descUser.RegisterUserV1Server(serv, &server{pool: pool})
 	if err = serv.Serve(lis); err != nil {
 		log.Printf("fail to serve: %v\n", err)
