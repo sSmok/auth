@@ -2,30 +2,39 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"flag"
 	"log"
-	"os"
 	"time"
 
 	"github.com/brianvoe/gofakeit"
 	"github.com/fatih/color"
-	"github.com/joho/godotenv"
+	"github.com/sSmok/auth/internal/config"
 	descUser "github.com/sSmok/auth/pkg/user_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+var configPath string
+
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	flag.StringVar(&configPath, "config-path", ".env", "path to config file")
 }
 
 func main() {
-	address := fmt.Sprintf("localhost:%v", os.Getenv("GRPC_PORT"))
-	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	flag.Parse()
+
+	err := config.Load(configPath)
+	if err != nil {
+		log.Fatalf("failed to load config file: %v", err)
+	}
+
+	grpcConfig, err := config.NewGRPCConfig()
+	if err != nil {
+		log.Fatalf("failed to load grpc config: %v", err)
+	}
+
+	conn, err := grpc.NewClient(grpcConfig.Address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("failed to connect to server: %v\n", err)
 	}

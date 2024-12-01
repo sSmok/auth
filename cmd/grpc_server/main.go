@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
+	"flag"
 	"log"
 	"net"
-	"os"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
+	"github.com/sSmok/auth/internal/config"
 	descUser "github.com/sSmok/auth/pkg/user_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -19,16 +18,31 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+var configPath string
+
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	flag.StringVar(&configPath, "config-path", ".env", "path to config file")
 }
 
 func main() {
+	flag.Parse()
 	ctx := context.Background()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", os.Getenv("GRPC_PORT")))
+	err := config.Load(configPath)
+	if err != nil {
+		log.Fatalf("failed to load config file: %v", err)
+	}
+
+	grpcConfig, err := config.NewGRPCConfig()
+	if err != nil {
+		log.Fatalf("failed to get grpc config: %v", err)
+	}
+
+	pgConfig, err := config.NewPGConfig()
+	if err != nil {
+		log.Fatalf("failed to get pg config: %v", err)
+	}
+
+	lis, err := net.Listen("tcp", grpcConfig.Address())
 	if err != nil {
 		log.Printf("fail to listen: %v\n", err)
 	}
@@ -40,7 +54,7 @@ func main() {
 
 	serv := grpc.NewServer()
 	reflection.Register(serv)
-	pool, err := pgxpool.New(ctx, os.Getenv("DB_DSN"))
+	pool, err := pgxpool.New(ctx, pgConfig.DSN())
 	if err != nil {
 		log.Fatalf("db pool connection error: %v", err)
 	}
