@@ -18,6 +18,16 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	userIDCol        = "id"
+	userNameCol      = "name"
+	userEmailCol     = "email"
+	userRoleCol      = "role"
+	userCreatedAtCol = "created_at"
+	userUpdatedAtCol = "updated_at"
+	userPasswordCol  = "password"
+)
+
 var configPath string
 
 func init() {
@@ -71,7 +81,7 @@ type server struct {
 	pool *pgxpool.Pool
 }
 
-func (s *server) Create(ctx context.Context, req *descUser.CreateRequest) (*descUser.CreateResponse, error) {
+func (s *server) CreateUser(ctx context.Context, req *descUser.CreateUserRequest) (*descUser.CreateUserResponse, error) {
 	pass := req.GetPass().GetPassword()
 	passConfirm := req.GetPass().GetPasswordConfirm()
 	if pass != passConfirm {
@@ -80,8 +90,8 @@ func (s *server) Create(ctx context.Context, req *descUser.CreateRequest) (*desc
 
 	builder := sq.Insert("users").
 		PlaceholderFormat(sq.Dollar).
-		Columns("name", "email", "role", "created_at", "updated_at", "password").
-		Values(req.GetInfo().GetName(), req.GetInfo().GetEmail(), req.GetInfo().GetRole(), time.Now(), time.Now(), pass).
+		Columns(userNameCol, userEmailCol, userRoleCol, userCreatedAtCol, userUpdatedAtCol, userPasswordCol).
+		Values(req.GetInfo().GetName(), req.GetInfo().GetEmail(), req.GetInfo().GetRole(), time.Now().UTC(), time.Now().UTC(), pass).
 		Suffix("RETURNING id")
 	query, args, err := builder.ToSql()
 	if err != nil {
@@ -92,18 +102,18 @@ func (s *server) Create(ctx context.Context, req *descUser.CreateRequest) (*desc
 	if err != nil {
 		return nil, err
 	}
-	return &descUser.CreateResponse{Id: userID}, nil
+	return &descUser.CreateUserResponse{Id: userID}, nil
 }
 
-func (s *server) Get(ctx context.Context, req *descUser.GetRequest) (*descUser.GetResponse, error) {
+func (s *server) GetUser(ctx context.Context, req *descUser.GetUserRequest) (*descUser.GetUserResponse, error) {
 	var id int64
 	var name, email, role string
 	var createdAt time.Time
 	var updatedAt time.Time
-	builder := sq.Select("id", "name", "email", "role", "created_at", "updated_at").
+	builder := sq.Select(userIDCol, userNameCol, userEmailCol, userRoleCol, userCreatedAtCol, userUpdatedAtCol).
 		From("users").
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{"id": req.GetId()}).
+		Where(sq.Eq{userIDCol: req.GetId()}).
 		Limit(1)
 	query, args, err := builder.ToSql()
 	if err != nil {
@@ -115,7 +125,7 @@ func (s *server) Get(ctx context.Context, req *descUser.GetRequest) (*descUser.G
 		return nil, err
 	}
 
-	resp := &descUser.GetResponse{
+	resp := &descUser.GetUserResponse{
 		User: &descUser.User{
 			Id: id,
 			Info: &descUser.UserInfo{
@@ -131,14 +141,14 @@ func (s *server) Get(ctx context.Context, req *descUser.GetRequest) (*descUser.G
 	return resp, nil
 }
 
-func (s *server) Update(ctx context.Context, req *descUser.UpdateRequest) (*emptypb.Empty, error) {
+func (s *server) UpdateUser(ctx context.Context, req *descUser.UpdateUserRequest) (*emptypb.Empty, error) {
 	builder := sq.Update("users").
 		PlaceholderFormat(sq.Dollar).
-		Set("name", req.GetInfo().GetName()).
-		Set("email", req.GetInfo().GetEmail()).
-		Set("role", req.GetInfo().GetRole()).
-		Set("updated_at", time.Now()).
-		Where(sq.Eq{"id": req.GetId()})
+		Set(userNameCol, req.GetInfo().GetName()).
+		Set(userEmailCol, req.GetInfo().GetEmail()).
+		Set(userRoleCol, req.GetInfo().GetRole()).
+		Set(userUpdatedAtCol, time.Now().UTC()).
+		Where(sq.Eq{userIDCol: req.GetId()})
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
@@ -152,10 +162,10 @@ func (s *server) Update(ctx context.Context, req *descUser.UpdateRequest) (*empt
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) Delete(ctx context.Context, req *descUser.DeleteRequest) (*emptypb.Empty, error) {
+func (s *server) DeleteUser(ctx context.Context, req *descUser.DeleteUserRequest) (*emptypb.Empty, error) {
 	builder := sq.Delete("users").
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{"id": req.GetId()})
+		Where(sq.Eq{userIDCol: req.GetId()})
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err

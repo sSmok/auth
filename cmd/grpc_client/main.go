@@ -51,7 +51,7 @@ func main() {
 	var userID int64
 	//=============
 	pass := gofakeit.Name()
-	reqCreate := &descUser.CreateRequest{
+	reqCreate := &descUser.CreateUserRequest{
 		Info: &descUser.UserInfo{
 			Name:  gofakeit.Name(),
 			Email: gofakeit.Email(),
@@ -62,7 +62,7 @@ func main() {
 			PasswordConfirm: pass,
 		},
 	}
-	respCreate, err := client.Create(ctx, reqCreate)
+	respCreate, err := client.CreateUser(ctx, reqCreate)
 	if err != nil {
 		log.Fatalf("failed to create user: %v\n", err)
 	}
@@ -70,14 +70,14 @@ func main() {
 	log.Printf(color.RedString("User id after create: %v\n"), color.GreenString("%+v", userID))
 
 	//=============
-	resp, err := client.Get(ctx, &descUser.GetRequest{Id: userID})
+	resp, err := client.GetUser(ctx, &descUser.GetUserRequest{Id: userID})
 	if err != nil {
 		log.Fatalf("failed on get request: %v\n", err)
 	}
 	log.Printf(color.RedString("User info:\n"), color.GreenString("%+v", resp.GetUser()))
 
 	//=============
-	reqUpd := &descUser.UpdateRequest{
+	reqUpd := &descUser.UpdateUserRequest{
 		Id: userID,
 		Info: &descUser.UpdateUserInfo{
 			Name:  wrapperspb.String(gofakeit.Name()),
@@ -85,15 +85,15 @@ func main() {
 			Role:  descUser.Role_user,
 		},
 	}
-	respUpd, err := client.Update(ctx, reqUpd)
+	respUpd, err := client.UpdateUser(ctx, reqUpd)
 	if err != nil {
 		log.Fatalf("error at update user: %+v\n", err)
 	}
 	log.Printf("update successfully: %+v\n", respUpd)
 
 	//=============
-	reqDel := &descUser.DeleteRequest{Id: userID}
-	respDel, err := client.Delete(ctx, reqDel)
+	reqDel := &descUser.DeleteUserRequest{Id: userID}
+	respDel, err := client.DeleteUser(ctx, reqDel)
 	if err != nil {
 		log.Fatalf("error at delete user: %+v\n", err)
 	}
