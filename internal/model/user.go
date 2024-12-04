@@ -14,3 +14,7 @@ type UserInfo struct {
 	Email string
 	Role  int
 }
+
+type UserPassword struct {
+	Password, PasswordConfirm string
+}

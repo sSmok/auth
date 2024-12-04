@@ -14,6 +14,13 @@ func ToUserInfoFromDesc(protoUserInfo *descUser.UserInfo) *model.UserInfo {
 	}
 }
 
+func ToUserPasswordFromDesc(protoUserInfo *descUser.UserPassword) *model.UserPassword {
+	return &model.UserPassword{
+		Password:        protoUserInfo.GetPassword(),
+		PasswordConfirm: protoUserInfo.GetPasswordConfirm(),
+	}
+}
+
 func ToUserInfoFromDescUpdate(protoUserInfo *descUser.UpdateUserInfo) *model.UserInfo {
 	return &model.UserInfo{
 		Name:  protoUserInfo.GetName().GetValue(),

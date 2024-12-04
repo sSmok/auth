@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"log"
 	"net"
@@ -11,7 +10,9 @@ import (
 	"github.com/sSmok/auth/internal/config"
 	"github.com/sSmok/auth/internal/converter"
 	"github.com/sSmok/auth/internal/repository"
-	"github.com/sSmok/auth/internal/repository/user"
+	userRepository "github.com/sSmok/auth/internal/repository/user"
+	"github.com/sSmok/auth/internal/service"
+	"github.com/sSmok/auth/internal/service/user"
 	descUser "github.com/sSmok/auth/pkg/user_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -60,7 +61,9 @@ func main() {
 	}
 	defer pool.Close()
 
-	descUser.RegisterUserV1Server(serv, &server{repo: user.NewUserRepository(pool)})
+	userRepo := userRepository.NewUserRepository(pool)
+	userService := user.NewService(userRepo)
+	descUser.RegisterUserV1Server(serv, &server{repo: userRepo, service: userService})
 	if err = serv.Serve(lis); err != nil {
 		log.Printf("fail to serve: %v\n", err)
 	}
@@ -68,18 +71,12 @@ func main() {
 
 type server struct {
 	descUser.UnimplementedUserV1Server
-	//pool *pgxpool.Pool
-	repo repository.UserRepositoryI
+	repo    repository.UserRepositoryI
+	service service.UserServiceI
 }
 
 func (s *server) CreateUser(ctx context.Context, req *descUser.CreateUserRequest) (*descUser.CreateUserResponse, error) {
-	pass := req.GetPass().GetPassword()
-	passConfirm := req.GetPass().GetPasswordConfirm()
-	if pass != passConfirm {
-		return nil, errors.New("passwords don't match")
-	}
-
-	userID, err := s.repo.CreateUser(ctx, converter.ToUserInfoFromDesc(req.GetInfo()), pass)
+	userID, err := s.service.CreateUser(ctx, converter.ToUserInfoFromDesc(req.GetInfo()), converter.ToUserPasswordFromDesc(req.GetPass()))
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +84,7 @@ func (s *server) CreateUser(ctx context.Context, req *descUser.CreateUserRequest
 }
 
 func (s *server) GetUser(ctx context.Context, req *descUser.GetUserRequest) (*descUser.GetUserResponse, error) {
-	userRepo, err := s.repo.GetUser(ctx, req.GetId())
+	userRepo, err := s.service.GetUser(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +93,7 @@ func (s *server) GetUser(ctx context.Context, req *descUser.GetUserRequest) (*de
 }
 
 func (s *server) UpdateUser(ctx context.Context, req *descUser.UpdateUserRequest) (*emptypb.Empty, error) {
-	err := s.repo.UpdateUser(ctx, req.GetId(), converter.ToUserInfoFromDescUpdate(req.GetInfo()))
+	err := s.service.UpdateUser(ctx, req.GetId(), converter.ToUserInfoFromDescUpdate(req.GetInfo()))
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +102,7 @@ func (s *server) UpdateUser(ctx context.Context, req *descUser.UpdateUserRequest
 }
 
 func (s *server) DeleteUser(ctx context.Context, req *descUser.DeleteUserRequest) (*emptypb.Empty, error) {
-	err := s.repo.DeleteUser(ctx, req.GetId())
+	err := s.service.DeleteUser(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}
