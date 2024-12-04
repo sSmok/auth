@@ -2,13 +2,13 @@ package config
 
 import "github.com/joho/godotenv"
 
-// PGConfig предоставляет контракт для получения адреса базы данных
-type PGConfig interface {
+// PGConfigI предоставляет контракт для получения адреса базы данных
+type PGConfigI interface {
 	DSN() string
 }
 
-// GRPCConfig предоставляет контракт для получения адреса GRPC-сервера
-type GRPCConfig interface {
+// GRPCConfigI предоставляет контракт для получения адреса GRPC-сервера
+type GRPCConfigI interface {
 	Address() string
 }
 

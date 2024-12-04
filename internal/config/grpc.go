@@ -17,7 +17,7 @@ type grpcConfig struct {
 }
 
 // NewGRPCConfig достает из config-файла данные о GRPC-сервере: название хоста и номер порта
-func NewGRPCConfig() (GRPCConfig, error) {
+func NewGRPCConfig() (GRPCConfigI, error) {
 	host := os.Getenv(hostEnv)
 	if len(host) == 0 {
 		return nil, errors.New("host env not found")

@@ -12,7 +12,7 @@ type pgConfig struct {
 }
 
 // NewPGConfig достает из config-файла данные о базе данных: адрес БД
-func NewPGConfig() (PGConfig, error) {
+func NewPGConfig() (PGConfigI, error) {
 	dsn := os.Getenv(dsnEnv)
 	if len(dsn) == 0 {
 		return nil, errors.New("pg dsn not found")
