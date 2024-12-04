@@ -7,16 +7,13 @@ import (
 	"net"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	userApi "github.com/sSmok/auth/internal/api/user"
 	"github.com/sSmok/auth/internal/config"
-	"github.com/sSmok/auth/internal/converter"
-	"github.com/sSmok/auth/internal/repository"
 	userRepository "github.com/sSmok/auth/internal/repository/user"
-	"github.com/sSmok/auth/internal/service"
 	"github.com/sSmok/auth/internal/service/user"
 	descUser "github.com/sSmok/auth/pkg/user_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var configPath string
@@ -63,48 +60,10 @@ func main() {
 
 	userRepo := userRepository.NewUserRepository(pool)
 	userService := user.NewService(userRepo)
-	descUser.RegisterUserV1Server(serv, &server{repo: userRepo, service: userService})
+	userApiServer := userApi.NewApi(userService)
+
+	descUser.RegisterUserV1Server(serv, userApiServer)
 	if err = serv.Serve(lis); err != nil {
 		log.Printf("fail to serve: %v\n", err)
 	}
-}
-
-type server struct {
-	descUser.UnimplementedUserV1Server
-	repo    repository.UserRepositoryI
-	service service.UserServiceI
-}
-
-func (s *server) CreateUser(ctx context.Context, req *descUser.CreateUserRequest) (*descUser.CreateUserResponse, error) {
-	userID, err := s.service.CreateUser(ctx, converter.ToUserInfoFromDesc(req.GetInfo()), converter.ToUserPasswordFromDesc(req.GetPass()))
-	if err != nil {
-		return nil, err
-	}
-	return &descUser.CreateUserResponse{Id: userID}, nil
-}
-
-func (s *server) GetUser(ctx context.Context, req *descUser.GetUserRequest) (*descUser.GetUserResponse, error) {
-	userRepo, err := s.service.GetUser(ctx, req.GetId())
-	if err != nil {
-		return nil, err
-	}
-
-	return &descUser.GetUserResponse{User: converter.ToDescFromUser(userRepo)}, nil
-}
-
-func (s *server) UpdateUser(ctx context.Context, req *descUser.UpdateUserRequest) (*emptypb.Empty, error) {
-	err := s.service.UpdateUser(ctx, req.GetId(), converter.ToUserInfoFromDescUpdate(req.GetInfo()))
-	if err != nil {
-		return nil, err
-	}
-
-	return &emptypb.Empty{}, nil
-}
-
-func (s *server) DeleteUser(ctx context.Context, req *descUser.DeleteUserRequest) (*emptypb.Empty, error) {
-	err := s.service.DeleteUser(ctx, req.GetId())
-	if err != nil {
-		return nil, err
-	}
-	return &emptypb.Empty{}, nil
 }
