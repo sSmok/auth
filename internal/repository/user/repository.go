@@ -6,7 +6,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sSmok/auth/internal/client/db"
 	"github.com/sSmok/auth/internal/model"
 	"github.com/sSmok/auth/internal/repository"
 	"github.com/sSmok/auth/internal/repository/user/converter"
@@ -24,12 +24,12 @@ const (
 )
 
 type userRepository struct {
-	pool *pgxpool.Pool
+	dbClient db.ClientI
 }
 
-// NewUserRepository - конструктор репозитория
-func NewUserRepository(pool *pgxpool.Pool) repository.UserRepositoryI {
-	return &userRepository{pool: pool}
+// NewUserRepository - конструктор репозитория пользователей
+func NewUserRepository(dbClient db.ClientI) repository.UserRepositoryI {
+	return &userRepository{dbClient: dbClient}
 }
 
 func (repo *userRepository) CreateUser(ctx context.Context, info *model.UserInfo, password string) (int64, error) {
@@ -45,7 +45,12 @@ func (repo *userRepository) CreateUser(ctx context.Context, info *model.UserInfo
 		return 0, err
 	}
 	var userID int64
-	err = repo.pool.QueryRow(ctx, query, args...).Scan(&userID)
+	q := db.Query{
+		Name:     "user_repository.CreateUser",
+		QueryRaw: query,
+	}
+
+	err = repo.dbClient.DB().ScanOneContext(ctx, &userID, q, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -64,7 +69,11 @@ func (repo *userRepository) GetUser(ctx context.Context, id int64) (*model.User,
 	}
 
 	var user modelRepo.User
-	err = repo.pool.QueryRow(ctx, query, args...).Scan(&user.ID, &user.Info.Name, &user.Info.Email, &user.Info.Role, &user.CreatedAt, &user.UpdatedAt)
+	q := db.Query{
+		Name:     "user_repository.GetUser",
+		QueryRaw: query,
+	}
+	err = repo.dbClient.DB().ScanOneContext(ctx, &user, q, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +95,11 @@ func (repo *userRepository) UpdateUser(ctx context.Context, id int64, info *mode
 	if err != nil {
 		return err
 	}
-	exec, err := repo.pool.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "user_repository.UpdateUser",
+		QueryRaw: query,
+	}
+	exec, err := repo.dbClient.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return err
 	}
@@ -103,7 +116,11 @@ func (repo *userRepository) DeleteUser(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
-	exec, err := repo.pool.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "user_repository.DeleteUser",
+		QueryRaw: query,
+	}
+	exec, err := repo.dbClient.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return err
 	}

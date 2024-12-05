@@ -1,0 +1,52 @@
+package db
+
+import (
+	"context"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+)
+
+// ClientI интерфейс для работы с БД
+type ClientI interface {
+	DB() DB
+	Close() error
+}
+
+// Query структура для выполнения запросов, хранящая имя запроса и сам запрос
+// Имя запроса используется для логирования и потенциально может использоваться еще где-то, например, для трейсинга
+type Query struct {
+	Name     string
+	QueryRaw string
+}
+
+// DB интерфейс для запросов к БД
+type DB interface {
+	Pinger
+	SQLExecer
+	Close()
+}
+
+// SQLExecer интрефейс для выполнения запросов
+type SQLExecer interface {
+	NamedExecer
+	QueryExecer
+}
+
+// NamedExecer интрефейс для выполнения именованных запросов с помощью тегов в структурах
+type NamedExecer interface {
+	ScanOneContext(ctx context.Context, dest interface{}, query Query, args ...interface{}) error
+	ScanAllContext(ctx context.Context, dest interface{}, query Query, args ...interface{}) error
+}
+
+// QueryExecer интрефейс для выполнения запросов
+type QueryExecer interface {
+	ExecContext(ctx context.Context, query Query, args ...interface{}) (pgconn.CommandTag, error)
+	QueryContext(ctx context.Context, query Query, args ...interface{}) (pgx.Rows, error)
+	QueryRowContext(ctx context.Context, query Query, args ...interface{}) pgx.Row
+}
+
+// Pinger интерфейс для проверки подключения
+type Pinger interface {
+	Ping(ctx context.Context) error
+}

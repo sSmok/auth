@@ -4,8 +4,9 @@ import (
 	"context"
 	"log"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	userAPI "github.com/sSmok/auth/internal/api/user"
+	"github.com/sSmok/auth/internal/client/db"
+	"github.com/sSmok/auth/internal/client/db/pg"
 	"github.com/sSmok/auth/internal/closer"
 	"github.com/sSmok/auth/internal/config"
 	"github.com/sSmok/auth/internal/repository"
@@ -15,11 +16,9 @@ import (
 )
 
 type container struct {
-	grpcConfig config.GRPCConfigI
-	pgConfig   config.PGConfigI
-
-	pgPool *pgxpool.Pool
-
+	grpcConfig     config.GRPCConfigI
+	pgConfig       config.PGConfigI
+	dbClient       db.ClientI
 	userRepository repository.UserRepositoryI
 	userService    service.UserServiceI
 	userAPI        *userAPI.API
@@ -51,25 +50,21 @@ func (c *container) PGConfig() config.PGConfigI {
 	return c.pgConfig
 }
 
-func (c *container) PGPool(ctx context.Context) *pgxpool.Pool {
-	if c.pgPool == nil {
-		pool, err := pgxpool.New(ctx, c.PGConfig().DSN())
+func (c *container) ClientDB(ctx context.Context) db.ClientI {
+	if c.dbClient == nil {
+		client, err := pg.NewPGClient(ctx, c.PGConfig().DSN())
 		if err != nil {
-			log.Fatalf("db pool connection error: %v", err)
+			log.Fatalf("db client connection error: %v", err)
 		}
-		closer.Add(func() error {
-			pool.Close()
-			return nil
-		})
-
-		c.pgPool = pool
+		closer.Add(client.Close)
+		c.dbClient = client
 	}
-	return c.pgPool
+	return c.dbClient
 }
 
 func (c *container) UserRepository(ctx context.Context) repository.UserRepositoryI {
 	if c.userRepository == nil {
-		c.userRepository = userRepository.NewUserRepository(c.PGPool(ctx))
+		c.userRepository = userRepository.NewUserRepository(c.ClientDB(ctx))
 	}
 	return c.userRepository
 }
