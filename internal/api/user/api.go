@@ -5,13 +5,15 @@ import (
 	descUser "github.com/sSmok/auth/pkg/user_v1"
 )
 
-type Api struct {
+// API - апи слой для работы с пользователем, взаимодействует с сервисным слоем
+type API struct {
 	descUser.UnimplementedUserV1Server
 	service service.UserServiceI
 }
 
-func NewApi(userService service.UserServiceI) *Api {
-	return &Api{
+// NewAPI - конструктор апи слоя
+func NewAPI(userService service.UserServiceI) *API {
+	return &API{
 		service: userService,
 	}
 }

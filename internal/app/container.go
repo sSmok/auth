@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	userApi "github.com/sSmok/auth/internal/api/user"
+	userAPI "github.com/sSmok/auth/internal/api/user"
 	"github.com/sSmok/auth/internal/closer"
 	"github.com/sSmok/auth/internal/config"
 	"github.com/sSmok/auth/internal/repository"
@@ -22,7 +22,7 @@ type container struct {
 
 	userRepository repository.UserRepositoryI
 	userService    service.UserServiceI
-	userApi        *userApi.Api
+	userAPI        *userAPI.API
 }
 
 func newContainer() *container {
@@ -81,9 +81,9 @@ func (c *container) UserService(ctx context.Context) service.UserServiceI {
 	return c.userService
 }
 
-func (c *container) UserApi(ctx context.Context) *userApi.Api {
-	if c.userApi == nil {
-		c.userApi = userApi.NewApi(c.UserService(ctx))
+func (c *container) UserAPI(ctx context.Context) *userAPI.API {
+	if c.userAPI == nil {
+		c.userAPI = userAPI.NewAPI(c.UserService(ctx))
 	}
-	return c.userApi
+	return c.userAPI
 }

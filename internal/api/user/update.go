@@ -8,7 +8,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (api *Api) UpdateUser(ctx context.Context, req *descUser.UpdateUserRequest) (*emptypb.Empty, error) {
+// UpdateUser обновляет информацию о пользователе получая данные из proto объекта
+func (api *API) UpdateUser(ctx context.Context, req *descUser.UpdateUserRequest) (*emptypb.Empty, error) {
 	err := api.service.UpdateUser(ctx, req.GetId(), converter.ToUserInfoFromDescUpdate(req.GetInfo()))
 	if err != nil {
 		return nil, err

@@ -15,7 +15,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("fail to init application: %v", err)
 	}
-	err = newApp.Run(ctx)
+	err = newApp.Run()
 	if err != nil {
 		log.Fatalf("fail to run application: %v", err)
 	}

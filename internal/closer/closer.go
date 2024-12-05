@@ -9,18 +9,22 @@ import (
 
 var globalCloser = New()
 
+// Add добавляет функции закрытия ресурса в пул функций
 func Add(f ...func() error) {
 	globalCloser.Add(f...)
 }
 
+// Wait блокирует выполнение пока канал не закроется в функции CloseAll
 func Wait() {
 	globalCloser.Wait()
 }
 
+// CloseAll проходит по пулу функций и закрывает ресурсы
 func CloseAll() {
 	globalCloser.CloseAll()
 }
 
+// Closer — структура для работы с пулом функций, закрывающих ресурсы
 type Closer struct {
 	mu    sync.Mutex
 	once  sync.Once
@@ -28,6 +32,7 @@ type Closer struct {
 	funcs []func() error
 }
 
+// New принимает набор сигналов операционной системы, при срабатывании одного из них будет вызвана функция CloseAll
 func New(sig ...os.Signal) *Closer {
 	c := &Closer{done: make(chan struct{})}
 	if len(sig) > 0 {
@@ -43,16 +48,19 @@ func New(sig ...os.Signal) *Closer {
 	return c
 }
 
+// Add добавляет функцию закрытия ресурса в пул
 func (c *Closer) Add(f ...func() error) {
 	c.mu.Lock()
 	c.funcs = append(c.funcs, f...)
 	c.mu.Unlock()
 }
 
+// Wait блокирует выполнение пока канал не закроется в функции CloseAll
 func (c *Closer) Wait() {
 	<-c.done
 }
 
+// CloseAll проходит по пулу функций и закрывает ресурсы
 func (c *Closer) CloseAll() {
 	c.once.Do(func() {
 		defer close(c.done)

@@ -7,7 +7,8 @@ import (
 	descUser "github.com/sSmok/auth/pkg/user_v1"
 )
 
-func (api *Api) GetUser(ctx context.Context, req *descUser.GetUserRequest) (*descUser.GetUserResponse, error) {
+// GetUser получает информацию о пользователе получая данные из proto объекта
+func (api *API) GetUser(ctx context.Context, req *descUser.GetUserRequest) (*descUser.GetUserResponse, error) {
 	userRepo, err := api.service.GetUser(ctx, req.GetId())
 	if err != nil {
 		return nil, err

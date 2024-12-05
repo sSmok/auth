@@ -19,11 +19,13 @@ func init() {
 	flag.Parse()
 }
 
+// App представляет основную логику приложения, содержит DI контейнер и сервер gRPC
 type App struct {
 	container  *container
 	grpcServer *grpc.Server
 }
 
+// NewApp создает новое приложение
 func NewApp(ctx context.Context) (*App, error) {
 	app := &App{}
 	err := app.initDeps(ctx)
@@ -34,13 +36,14 @@ func NewApp(ctx context.Context) (*App, error) {
 	return app, nil
 }
 
-func (app *App) Run(ctx context.Context) error {
+// Run запускает grpc сервер и контролирует закрытие ресурсов
+func (app *App) Run() error {
 	defer func() {
 		closer.CloseAll()
 		closer.Wait()
 	}()
 
-	return app.runGRPCSever(ctx)
+	return app.runGRPCServer()
 }
 
 func (app *App) initDeps(ctx context.Context) error {
@@ -68,7 +71,7 @@ func (app *App) initConfig(_ context.Context) error {
 	return nil
 }
 
-func (app *App) initContainer(ctx context.Context) error {
+func (app *App) initContainer(_ context.Context) error {
 	app.container = newContainer()
 	return nil
 }
@@ -76,12 +79,12 @@ func (app *App) initContainer(ctx context.Context) error {
 func (app *App) initGRPCSever(ctx context.Context) error {
 	app.grpcServer = grpc.NewServer()
 	reflection.Register(app.grpcServer)
-	descUser.RegisterUserV1Server(app.grpcServer, app.container.UserApi(ctx))
+	descUser.RegisterUserV1Server(app.grpcServer, app.container.UserAPI(ctx))
 
 	return nil
 }
 
-func (app *App) runGRPCSever(ctx context.Context) error {
+func (app *App) runGRPCServer() error {
 	lis, err := net.Listen("tcp", app.container.GRPCConfig().Address())
 	if err != nil {
 		return err
