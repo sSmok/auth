@@ -12,9 +12,22 @@ func (s serv) CreateUser(ctx context.Context, info *model.UserInfo, pass *model.
 		return 0, errors.New("passwords don't match")
 	}
 
-	userID, err := s.userRepository.CreateUser(ctx, info, pass.Password)
+	var userID int64
+	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
+		var errTx error
+		userID, errTx = s.userRepository.CreateUser(ctx, info, pass.Password)
+		if errTx != nil {
+			return errTx
+		}
+		_, errTx = s.userRepository.GetUser(ctx, userID)
+		if errTx != nil {
+			return errTx
+		}
+		return nil
+	})
 	if err != nil {
 		return 0, err
 	}
+
 	return userID, nil
 }

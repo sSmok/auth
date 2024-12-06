@@ -7,6 +7,7 @@ import (
 	userAPI "github.com/sSmok/auth/internal/api/user"
 	"github.com/sSmok/auth/internal/client/db"
 	"github.com/sSmok/auth/internal/client/db/pg"
+	"github.com/sSmok/auth/internal/client/db/transaction"
 	"github.com/sSmok/auth/internal/closer"
 	"github.com/sSmok/auth/internal/config"
 	"github.com/sSmok/auth/internal/repository"
@@ -19,6 +20,7 @@ type container struct {
 	grpcConfig     config.GRPCConfigI
 	pgConfig       config.PGConfigI
 	dbClient       db.ClientI
+	txManager      db.TxManagerI
 	userRepository repository.UserRepositoryI
 	userService    service.UserServiceI
 	userAPI        *userAPI.API
@@ -62,6 +64,14 @@ func (c *container) ClientDB(ctx context.Context) db.ClientI {
 	return c.dbClient
 }
 
+func (c *container) TxManager(ctx context.Context) db.TxManagerI {
+	if c.txManager == nil {
+		c.txManager = transaction.NewManager(c.ClientDB(ctx).DB())
+	}
+
+	return c.txManager
+}
+
 func (c *container) UserRepository(ctx context.Context) repository.UserRepositoryI {
 	if c.userRepository == nil {
 		c.userRepository = userRepository.NewUserRepository(c.ClientDB(ctx))
@@ -71,7 +81,7 @@ func (c *container) UserRepository(ctx context.Context) repository.UserRepositor
 
 func (c *container) UserService(ctx context.Context) service.UserServiceI {
 	if c.userService == nil {
-		c.userService = user.NewService(c.UserRepository(ctx))
+		c.userService = user.NewService(c.UserRepository(ctx), c.TxManager(ctx))
 	}
 	return c.userService
 }

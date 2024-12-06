@@ -13,6 +13,10 @@ import (
 	"github.com/sSmok/auth/internal/client/db/prettier"
 )
 
+type key string
+
+const TxKey key = "tx"
+
 type pg struct {
 	pool *pgxpool.Pool
 }
@@ -60,21 +64,47 @@ func (pg *pg) ScanAllContext(ctx context.Context, dest interface{}, query db.Que
 
 func (pg *pg) ExecContext(ctx context.Context, query db.Query, args ...interface{}) (pgconn.CommandTag, error) {
 	logQuery(ctx, query, args...)
+
+	tx, ok := ctx.Value(TxKey).(pgx.Tx)
+	if ok {
+		return tx.Exec(ctx, query.QueryRaw, args...)
+	}
+
 	return pg.pool.Exec(ctx, query.QueryRaw, args...)
 }
 
 func (pg *pg) QueryContext(ctx context.Context, query db.Query, args ...interface{}) (pgx.Rows, error) {
 	logQuery(ctx, query, args...)
+
+	tx, ok := ctx.Value(TxKey).(pgx.Tx)
+	if ok {
+		return tx.Query(ctx, query.QueryRaw, args...)
+	}
+
 	return pg.pool.Query(ctx, query.QueryRaw, args...)
 }
 
 func (pg *pg) QueryRowContext(ctx context.Context, query db.Query, args ...interface{}) pgx.Row {
 	logQuery(ctx, query, args...)
+
+	tx, ok := ctx.Value(TxKey).(pgx.Tx)
+	if ok {
+		return tx.QueryRow(ctx, query.QueryRaw, args...)
+	}
+
 	return pg.pool.QueryRow(ctx, query.QueryRaw, args...)
 }
 
 func (pg *pg) Close() {
 	pg.pool.Close()
+}
+
+func (pg *pg) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) {
+	return pg.pool.BeginTx(ctx, txOptions)
+}
+
+func MakeContextTransaction(ctx context.Context, tx pgx.Tx) context.Context {
+	return context.WithValue(ctx, TxKey, tx)
 }
 
 func logQuery(ctx context.Context, query db.Query, args ...interface{}) {

@@ -20,10 +20,21 @@ type Query struct {
 	QueryRaw string
 }
 
+type Handler func(ctx context.Context) error
+
+type TxManagerI interface {
+	ReadCommitted(ctx context.Context, f Handler) error
+}
+
+type TransactorI interface {
+	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
+}
+
 // DB интерфейс для запросов к БД
 type DB interface {
 	Pinger
 	SQLExecer
+	TransactorI
 	Close()
 }
 
