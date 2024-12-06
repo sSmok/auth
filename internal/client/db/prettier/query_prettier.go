@@ -6,8 +6,10 @@ import (
 	"strings"
 )
 
+// DollarPlaceholder - символ, который используется текущей БД при подставлении аргументов запроса
 const DollarPlaceholder = "$"
 
+// Pretty - функция, форматируящая запрос в БД под формат логов
 func Pretty(query string, placeholder string, args ...interface{}) string {
 	for i, arg := range args {
 		var value string

@@ -20,12 +20,15 @@ type Query struct {
 	QueryRaw string
 }
 
+// Handler - функция, которая выполняется в транзакции
 type Handler func(ctx context.Context) error
 
+// TxManagerI интерфейс выполнения переданного обработчика в рамках определенного уровня изоляции
 type TxManagerI interface {
 	ReadCommitted(ctx context.Context, f Handler) error
 }
 
+// TransactorI интерфейс для работы с транзакцией
 type TransactorI interface {
 	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
 }

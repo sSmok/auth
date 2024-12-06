@@ -15,6 +15,7 @@ import (
 
 type key string
 
+// TxKey - ключ, который мы передаем в контекст для определения наличия транзакции
 const TxKey key = "tx"
 
 type pg struct {
@@ -103,6 +104,7 @@ func (pg *pg) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, err
 	return pg.pool.BeginTx(ctx, txOptions)
 }
 
+// MakeContextTransaction - добавляет в контекст транзакцию
 func MakeContextTransaction(ctx context.Context, tx pgx.Tx) context.Context {
 	return context.WithValue(ctx, TxKey, tx)
 }

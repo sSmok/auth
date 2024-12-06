@@ -14,6 +14,7 @@ type manager struct {
 	pool db.TransactorI
 }
 
+// NewManager - конструктор менеджера транзакций, для выполнения запросов в рамках одной транзакции
 func NewManager(pool db.TransactorI) db.TxManagerI {
 	return &manager{pool: pool}
 }
