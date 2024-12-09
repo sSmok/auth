@@ -30,6 +30,6 @@ func ToRepoFromUserInfo(info *model.UserInfo) *modelRepo.UserInfo {
 	return &modelRepo.UserInfo{
 		Name:  info.Name,
 		Email: info.Email,
-		Role:  descUser.Role_name[int32(info.Role)],
+		Role:  descUser.Role_name[info.Role],
 	}
 }
