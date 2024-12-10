@@ -8,8 +8,8 @@ import (
 
 	"github.com/brianvoe/gofakeit"
 	"github.com/fatih/color"
-	"github.com/sSmok/auth/internal/config"
 	descUser "github.com/sSmok/auth/pkg/user_v1"
+	"github.com/sSmok/platform_common/pkg/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/wrapperspb"

@@ -5,15 +5,15 @@ import (
 	"log"
 
 	userAPI "github.com/sSmok/auth/internal/api/user"
-	"github.com/sSmok/auth/internal/client/db"
-	"github.com/sSmok/auth/internal/client/db/pg"
-	"github.com/sSmok/auth/internal/client/db/transaction"
-	"github.com/sSmok/auth/internal/closer"
-	"github.com/sSmok/auth/internal/config"
 	"github.com/sSmok/auth/internal/repository"
 	userRepository "github.com/sSmok/auth/internal/repository/user"
 	"github.com/sSmok/auth/internal/service"
 	"github.com/sSmok/auth/internal/service/user"
+	"github.com/sSmok/platform_common/pkg/client/db"
+	"github.com/sSmok/platform_common/pkg/client/db/pg"
+	"github.com/sSmok/platform_common/pkg/client/db/transaction"
+	"github.com/sSmok/platform_common/pkg/closer"
+	"github.com/sSmok/platform_common/pkg/config"
 )
 
 type container struct {

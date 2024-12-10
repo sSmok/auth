@@ -5,9 +5,9 @@ import (
 	"flag"
 	"net"
 
-	"github.com/sSmok/auth/internal/closer"
-	"github.com/sSmok/auth/internal/config"
 	descUser "github.com/sSmok/auth/pkg/user_v1"
+	"github.com/sSmok/platform_common/pkg/closer"
+	"github.com/sSmok/platform_common/pkg/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )

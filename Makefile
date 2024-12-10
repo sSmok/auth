@@ -34,3 +34,14 @@ local-migration-up:
 	$(LOCAL_BIN)/goose -dir ${MIGRATION_DIR} postgres ${DB_DSN} up -v
 local-migration-down:
 	$(LOCAL_BIN)/goose -dir ${MIGRATION_DIR} postgres ${DB_DSN} down -v
+
+test:
+	go clean -testcache
+	go test ./... -covermode count -count 5
+test-coverage:
+	go clean -testcache
+	go test ./... -coverprofile=coverage.tmp.out -covermode count -coverpkg=github.com/sSmok/auth/internal/service/...,github.com/sSmok/auth/internal/api/... -count 5
+	grep -v 'mocks\|config' coverage.tmp.out  > coverage.out
+	rm coverage.tmp.out
+	go tool cover -html=coverage.out;
+	go tool cover -func=./coverage.out | grep "total";

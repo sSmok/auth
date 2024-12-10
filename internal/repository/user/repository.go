@@ -6,11 +6,11 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/sSmok/auth/internal/client/db"
 	"github.com/sSmok/auth/internal/model"
 	"github.com/sSmok/auth/internal/repository"
 	"github.com/sSmok/auth/internal/repository/user/converter"
 	modelRepo "github.com/sSmok/auth/internal/repository/user/model"
+	"github.com/sSmok/platform_common/pkg/client/db"
 )
 
 const (
