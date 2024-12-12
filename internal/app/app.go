@@ -3,8 +3,11 @@ package app
 import (
 	"context"
 	"flag"
+	"log"
 	"net"
 
+	descAccess "github.com/sSmok/auth/pkg/access_v1"
+	descAuth "github.com/sSmok/auth/pkg/auth_v1"
 	descUser "github.com/sSmok/auth/pkg/user_v1"
 	"github.com/sSmok/platform_common/pkg/closer"
 	"github.com/sSmok/platform_common/pkg/config"
@@ -80,6 +83,8 @@ func (app *App) initGRPCSever(ctx context.Context) error {
 	app.grpcServer = grpc.NewServer()
 	reflection.Register(app.grpcServer)
 	descUser.RegisterUserV1Server(app.grpcServer, app.container.UserAPI(ctx))
+	descAccess.RegisterAccessV1Server(app.grpcServer, app.container.AccessAPI(ctx))
+	descAuth.RegisterAuthV1Server(app.grpcServer, app.container.AuthAPI(ctx))
 
 	return nil
 }
@@ -90,6 +95,8 @@ func (app *App) runGRPCServer() error {
 		return err
 	}
 	closer.Add(lis.Close)
+
+	log.Printf("GRPC server is running on %s", app.container.GRPCConfig().Address())
 
 	if err = app.grpcServer.Serve(lis); err != nil {
 		return err

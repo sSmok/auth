@@ -4,8 +4,12 @@ import (
 	"context"
 	"log"
 
+	accessAPI "github.com/sSmok/auth/internal/api/access"
+	authAPI "github.com/sSmok/auth/internal/api/auth"
 	userAPI "github.com/sSmok/auth/internal/api/user"
+	internalConfig "github.com/sSmok/auth/internal/config"
 	"github.com/sSmok/auth/internal/repository"
+	accessRepository "github.com/sSmok/auth/internal/repository/access"
 	userRepository "github.com/sSmok/auth/internal/repository/user"
 	"github.com/sSmok/auth/internal/service"
 	"github.com/sSmok/auth/internal/service/user"
@@ -17,13 +21,17 @@ import (
 )
 
 type container struct {
-	grpcConfig     config.GRPCConfigI
-	pgConfig       config.PGConfigI
-	dbClient       db.ClientI
-	txManager      db.TxManagerI
-	userRepository repository.UserRepositoryI
-	userService    service.UserServiceI
-	userAPI        *userAPI.API
+	grpcConfig       config.GRPCConfigI
+	pgConfig         config.PGConfigI
+	dbClient         db.ClientI
+	tokenConfig      internalConfig.TokenConfigI
+	txManager        db.TxManagerI
+	userRepository   repository.UserRepositoryI
+	accessRepository repository.AccessRepositoryI
+	userService      service.UserServiceI
+	userAPI          *userAPI.API
+	accessAPI        *accessAPI.API
+	authAPI          *authAPI.API
 }
 
 func newContainer() *container {
@@ -50,6 +58,17 @@ func (c *container) PGConfig() config.PGConfigI {
 		c.pgConfig = cfg
 	}
 	return c.pgConfig
+}
+
+func (c *container) TokenConfig() internalConfig.TokenConfigI {
+	if c.tokenConfig == nil {
+		cfg, err := internalConfig.NewTokenConfig()
+		if err != nil {
+			log.Fatalf("failed to get token config: %v", err)
+		}
+		c.tokenConfig = cfg
+	}
+	return c.tokenConfig
 }
 
 func (c *container) ClientDB(ctx context.Context) db.ClientI {
@@ -79,6 +98,13 @@ func (c *container) UserRepository(ctx context.Context) repository.UserRepositor
 	return c.userRepository
 }
 
+func (c *container) AccessRepository(ctx context.Context) repository.AccessRepositoryI {
+	if c.accessRepository == nil {
+		c.accessRepository = accessRepository.NewAccessRepository(c.ClientDB(ctx))
+	}
+	return c.accessRepository
+}
+
 func (c *container) UserService(ctx context.Context) service.UserServiceI {
 	if c.userService == nil {
 		c.userService = user.NewService(c.UserRepository(ctx), c.TxManager(ctx))
@@ -91,4 +117,18 @@ func (c *container) UserAPI(ctx context.Context) *userAPI.API {
 		c.userAPI = userAPI.NewAPI(c.UserService(ctx))
 	}
 	return c.userAPI
+}
+
+func (c *container) AccessAPI(ctx context.Context) *accessAPI.API {
+	if c.accessAPI == nil {
+		c.accessAPI = accessAPI.NewAPI(c.AccessRepository(ctx), c.TokenConfig())
+	}
+	return c.accessAPI
+}
+
+func (c *container) AuthAPI(ctx context.Context) *authAPI.API {
+	if c.authAPI == nil {
+		c.authAPI = authAPI.NewAPI(c.UserRepository(ctx), c.TokenConfig())
+	}
+	return c.authAPI
 }

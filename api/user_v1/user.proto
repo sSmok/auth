@@ -16,8 +16,9 @@ service UserV1 {
 }
 
 enum Role {
-  user = 0;
-  admin = 1;
+  UNKNOWN = 0;
+  user = 1;
+  admin = 2;
 }
 
 message UserPassword {

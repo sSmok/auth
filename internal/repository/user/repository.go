@@ -81,6 +81,30 @@ func (repo *userRepository) GetUser(ctx context.Context, id int64) (*model.User,
 	return converter.ToUserFromRepo(&user), nil
 }
 
+func (repo *userRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+	builder := sq.Select(userIDCol, userNameCol, userEmailCol, userRoleCol, userCreatedAtCol, userUpdatedAtCol).
+		From("users").
+		PlaceholderFormat(sq.Dollar).
+		Where(sq.Eq{userEmailCol: email}).
+		Limit(1)
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var user modelRepo.User
+	q := db.Query{
+		Name:     "user_repository.GetUserByEmail",
+		QueryRaw: query,
+	}
+	err = repo.dbClient.DB().ScanOneContext(ctx, &user, q, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return converter.ToUserFromRepo(&user), nil
+}
+
 func (repo *userRepository) UpdateUser(ctx context.Context, id int64, info *model.UserInfo) error {
 	repoInfo := converter.ToRepoFromUserInfo(info)
 

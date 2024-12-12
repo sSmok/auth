@@ -40,6 +40,13 @@ type UserRepositoryIMock struct {
 	beforeGetUserCounter uint64
 	GetUserMock          mUserRepositoryIMockGetUser
 
+	funcGetUserByEmail          func(ctx context.Context, email string) (up1 *model.User, err error)
+	funcGetUserByEmailOrigin    string
+	inspectFuncGetUserByEmail   func(ctx context.Context, email string)
+	afterGetUserByEmailCounter  uint64
+	beforeGetUserByEmailCounter uint64
+	GetUserByEmailMock          mUserRepositoryIMockGetUserByEmail
+
 	funcUpdateUser          func(ctx context.Context, id int64, info *model.UserInfo) (err error)
 	funcUpdateUserOrigin    string
 	inspectFuncUpdateUser   func(ctx context.Context, id int64, info *model.UserInfo)
@@ -64,6 +71,9 @@ func NewUserRepositoryIMock(t minimock.Tester) *UserRepositoryIMock {
 
 	m.GetUserMock = mUserRepositoryIMockGetUser{mock: m}
 	m.GetUserMock.callArgs = []*UserRepositoryIMockGetUserParams{}
+
+	m.GetUserByEmailMock = mUserRepositoryIMockGetUserByEmail{mock: m}
+	m.GetUserByEmailMock.callArgs = []*UserRepositoryIMockGetUserByEmailParams{}
 
 	m.UpdateUserMock = mUserRepositoryIMockUpdateUser{mock: m}
 	m.UpdateUserMock.callArgs = []*UserRepositoryIMockUpdateUserParams{}
@@ -1132,6 +1142,349 @@ func (m *UserRepositoryIMock) MinimockGetUserInspect() {
 	}
 }
 
+type mUserRepositoryIMockGetUserByEmail struct {
+	optional           bool
+	mock               *UserRepositoryIMock
+	defaultExpectation *UserRepositoryIMockGetUserByEmailExpectation
+	expectations       []*UserRepositoryIMockGetUserByEmailExpectation
+
+	callArgs []*UserRepositoryIMockGetUserByEmailParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// UserRepositoryIMockGetUserByEmailExpectation specifies expectation struct of the UserRepositoryI.GetUserByEmail
+type UserRepositoryIMockGetUserByEmailExpectation struct {
+	mock               *UserRepositoryIMock
+	params             *UserRepositoryIMockGetUserByEmailParams
+	paramPtrs          *UserRepositoryIMockGetUserByEmailParamPtrs
+	expectationOrigins UserRepositoryIMockGetUserByEmailExpectationOrigins
+	results            *UserRepositoryIMockGetUserByEmailResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// UserRepositoryIMockGetUserByEmailParams contains parameters of the UserRepositoryI.GetUserByEmail
+type UserRepositoryIMockGetUserByEmailParams struct {
+	ctx   context.Context
+	email string
+}
+
+// UserRepositoryIMockGetUserByEmailParamPtrs contains pointers to parameters of the UserRepositoryI.GetUserByEmail
+type UserRepositoryIMockGetUserByEmailParamPtrs struct {
+	ctx   *context.Context
+	email *string
+}
+
+// UserRepositoryIMockGetUserByEmailResults contains results of the UserRepositoryI.GetUserByEmail
+type UserRepositoryIMockGetUserByEmailResults struct {
+	up1 *model.User
+	err error
+}
+
+// UserRepositoryIMockGetUserByEmailOrigins contains origins of expectations of the UserRepositoryI.GetUserByEmail
+type UserRepositoryIMockGetUserByEmailExpectationOrigins struct {
+	origin      string
+	originCtx   string
+	originEmail string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) Optional() *mUserRepositoryIMockGetUserByEmail {
+	mmGetUserByEmail.optional = true
+	return mmGetUserByEmail
+}
+
+// Expect sets up expected params for UserRepositoryI.GetUserByEmail
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) Expect(ctx context.Context, email string) *mUserRepositoryIMockGetUserByEmail {
+	if mmGetUserByEmail.mock.funcGetUserByEmail != nil {
+		mmGetUserByEmail.mock.t.Fatalf("UserRepositoryIMock.GetUserByEmail mock is already set by Set")
+	}
+
+	if mmGetUserByEmail.defaultExpectation == nil {
+		mmGetUserByEmail.defaultExpectation = &UserRepositoryIMockGetUserByEmailExpectation{}
+	}
+
+	if mmGetUserByEmail.defaultExpectation.paramPtrs != nil {
+		mmGetUserByEmail.mock.t.Fatalf("UserRepositoryIMock.GetUserByEmail mock is already set by ExpectParams functions")
+	}
+
+	mmGetUserByEmail.defaultExpectation.params = &UserRepositoryIMockGetUserByEmailParams{ctx, email}
+	mmGetUserByEmail.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmGetUserByEmail.expectations {
+		if minimock.Equal(e.params, mmGetUserByEmail.defaultExpectation.params) {
+			mmGetUserByEmail.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetUserByEmail.defaultExpectation.params)
+		}
+	}
+
+	return mmGetUserByEmail
+}
+
+// ExpectCtxParam1 sets up expected param ctx for UserRepositoryI.GetUserByEmail
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) ExpectCtxParam1(ctx context.Context) *mUserRepositoryIMockGetUserByEmail {
+	if mmGetUserByEmail.mock.funcGetUserByEmail != nil {
+		mmGetUserByEmail.mock.t.Fatalf("UserRepositoryIMock.GetUserByEmail mock is already set by Set")
+	}
+
+	if mmGetUserByEmail.defaultExpectation == nil {
+		mmGetUserByEmail.defaultExpectation = &UserRepositoryIMockGetUserByEmailExpectation{}
+	}
+
+	if mmGetUserByEmail.defaultExpectation.params != nil {
+		mmGetUserByEmail.mock.t.Fatalf("UserRepositoryIMock.GetUserByEmail mock is already set by Expect")
+	}
+
+	if mmGetUserByEmail.defaultExpectation.paramPtrs == nil {
+		mmGetUserByEmail.defaultExpectation.paramPtrs = &UserRepositoryIMockGetUserByEmailParamPtrs{}
+	}
+	mmGetUserByEmail.defaultExpectation.paramPtrs.ctx = &ctx
+	mmGetUserByEmail.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmGetUserByEmail
+}
+
+// ExpectEmailParam2 sets up expected param email for UserRepositoryI.GetUserByEmail
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) ExpectEmailParam2(email string) *mUserRepositoryIMockGetUserByEmail {
+	if mmGetUserByEmail.mock.funcGetUserByEmail != nil {
+		mmGetUserByEmail.mock.t.Fatalf("UserRepositoryIMock.GetUserByEmail mock is already set by Set")
+	}
+
+	if mmGetUserByEmail.defaultExpectation == nil {
+		mmGetUserByEmail.defaultExpectation = &UserRepositoryIMockGetUserByEmailExpectation{}
+	}
+
+	if mmGetUserByEmail.defaultExpectation.params != nil {
+		mmGetUserByEmail.mock.t.Fatalf("UserRepositoryIMock.GetUserByEmail mock is already set by Expect")
+	}
+
+	if mmGetUserByEmail.defaultExpectation.paramPtrs == nil {
+		mmGetUserByEmail.defaultExpectation.paramPtrs = &UserRepositoryIMockGetUserByEmailParamPtrs{}
+	}
+	mmGetUserByEmail.defaultExpectation.paramPtrs.email = &email
+	mmGetUserByEmail.defaultExpectation.expectationOrigins.originEmail = minimock.CallerInfo(1)
+
+	return mmGetUserByEmail
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserRepositoryI.GetUserByEmail
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) Inspect(f func(ctx context.Context, email string)) *mUserRepositoryIMockGetUserByEmail {
+	if mmGetUserByEmail.mock.inspectFuncGetUserByEmail != nil {
+		mmGetUserByEmail.mock.t.Fatalf("Inspect function is already set for UserRepositoryIMock.GetUserByEmail")
+	}
+
+	mmGetUserByEmail.mock.inspectFuncGetUserByEmail = f
+
+	return mmGetUserByEmail
+}
+
+// Return sets up results that will be returned by UserRepositoryI.GetUserByEmail
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) Return(up1 *model.User, err error) *UserRepositoryIMock {
+	if mmGetUserByEmail.mock.funcGetUserByEmail != nil {
+		mmGetUserByEmail.mock.t.Fatalf("UserRepositoryIMock.GetUserByEmail mock is already set by Set")
+	}
+
+	if mmGetUserByEmail.defaultExpectation == nil {
+		mmGetUserByEmail.defaultExpectation = &UserRepositoryIMockGetUserByEmailExpectation{mock: mmGetUserByEmail.mock}
+	}
+	mmGetUserByEmail.defaultExpectation.results = &UserRepositoryIMockGetUserByEmailResults{up1, err}
+	mmGetUserByEmail.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmGetUserByEmail.mock
+}
+
+// Set uses given function f to mock the UserRepositoryI.GetUserByEmail method
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) Set(f func(ctx context.Context, email string) (up1 *model.User, err error)) *UserRepositoryIMock {
+	if mmGetUserByEmail.defaultExpectation != nil {
+		mmGetUserByEmail.mock.t.Fatalf("Default expectation is already set for the UserRepositoryI.GetUserByEmail method")
+	}
+
+	if len(mmGetUserByEmail.expectations) > 0 {
+		mmGetUserByEmail.mock.t.Fatalf("Some expectations are already set for the UserRepositoryI.GetUserByEmail method")
+	}
+
+	mmGetUserByEmail.mock.funcGetUserByEmail = f
+	mmGetUserByEmail.mock.funcGetUserByEmailOrigin = minimock.CallerInfo(1)
+	return mmGetUserByEmail.mock
+}
+
+// When sets expectation for the UserRepositoryI.GetUserByEmail which will trigger the result defined by the following
+// Then helper
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) When(ctx context.Context, email string) *UserRepositoryIMockGetUserByEmailExpectation {
+	if mmGetUserByEmail.mock.funcGetUserByEmail != nil {
+		mmGetUserByEmail.mock.t.Fatalf("UserRepositoryIMock.GetUserByEmail mock is already set by Set")
+	}
+
+	expectation := &UserRepositoryIMockGetUserByEmailExpectation{
+		mock:               mmGetUserByEmail.mock,
+		params:             &UserRepositoryIMockGetUserByEmailParams{ctx, email},
+		expectationOrigins: UserRepositoryIMockGetUserByEmailExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmGetUserByEmail.expectations = append(mmGetUserByEmail.expectations, expectation)
+	return expectation
+}
+
+// Then sets up UserRepositoryI.GetUserByEmail return parameters for the expectation previously defined by the When method
+func (e *UserRepositoryIMockGetUserByEmailExpectation) Then(up1 *model.User, err error) *UserRepositoryIMock {
+	e.results = &UserRepositoryIMockGetUserByEmailResults{up1, err}
+	return e.mock
+}
+
+// Times sets number of times UserRepositoryI.GetUserByEmail should be invoked
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) Times(n uint64) *mUserRepositoryIMockGetUserByEmail {
+	if n == 0 {
+		mmGetUserByEmail.mock.t.Fatalf("Times of UserRepositoryIMock.GetUserByEmail mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmGetUserByEmail.expectedInvocations, n)
+	mmGetUserByEmail.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmGetUserByEmail
+}
+
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) invocationsDone() bool {
+	if len(mmGetUserByEmail.expectations) == 0 && mmGetUserByEmail.defaultExpectation == nil && mmGetUserByEmail.mock.funcGetUserByEmail == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmGetUserByEmail.mock.afterGetUserByEmailCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmGetUserByEmail.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// GetUserByEmail implements mm_repository.UserRepositoryI
+func (mmGetUserByEmail *UserRepositoryIMock) GetUserByEmail(ctx context.Context, email string) (up1 *model.User, err error) {
+	mm_atomic.AddUint64(&mmGetUserByEmail.beforeGetUserByEmailCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetUserByEmail.afterGetUserByEmailCounter, 1)
+
+	mmGetUserByEmail.t.Helper()
+
+	if mmGetUserByEmail.inspectFuncGetUserByEmail != nil {
+		mmGetUserByEmail.inspectFuncGetUserByEmail(ctx, email)
+	}
+
+	mm_params := UserRepositoryIMockGetUserByEmailParams{ctx, email}
+
+	// Record call args
+	mmGetUserByEmail.GetUserByEmailMock.mutex.Lock()
+	mmGetUserByEmail.GetUserByEmailMock.callArgs = append(mmGetUserByEmail.GetUserByEmailMock.callArgs, &mm_params)
+	mmGetUserByEmail.GetUserByEmailMock.mutex.Unlock()
+
+	for _, e := range mmGetUserByEmail.GetUserByEmailMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.up1, e.results.err
+		}
+	}
+
+	if mmGetUserByEmail.GetUserByEmailMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetUserByEmail.GetUserByEmailMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetUserByEmail.GetUserByEmailMock.defaultExpectation.params
+		mm_want_ptrs := mmGetUserByEmail.GetUserByEmailMock.defaultExpectation.paramPtrs
+
+		mm_got := UserRepositoryIMockGetUserByEmailParams{ctx, email}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmGetUserByEmail.t.Errorf("UserRepositoryIMock.GetUserByEmail got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetUserByEmail.GetUserByEmailMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.email != nil && !minimock.Equal(*mm_want_ptrs.email, mm_got.email) {
+				mmGetUserByEmail.t.Errorf("UserRepositoryIMock.GetUserByEmail got unexpected parameter email, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetUserByEmail.GetUserByEmailMock.defaultExpectation.expectationOrigins.originEmail, *mm_want_ptrs.email, mm_got.email, minimock.Diff(*mm_want_ptrs.email, mm_got.email))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetUserByEmail.t.Errorf("UserRepositoryIMock.GetUserByEmail got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmGetUserByEmail.GetUserByEmailMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetUserByEmail.GetUserByEmailMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetUserByEmail.t.Fatal("No results are set for the UserRepositoryIMock.GetUserByEmail")
+		}
+		return (*mm_results).up1, (*mm_results).err
+	}
+	if mmGetUserByEmail.funcGetUserByEmail != nil {
+		return mmGetUserByEmail.funcGetUserByEmail(ctx, email)
+	}
+	mmGetUserByEmail.t.Fatalf("Unexpected call to UserRepositoryIMock.GetUserByEmail. %v %v", ctx, email)
+	return
+}
+
+// GetUserByEmailAfterCounter returns a count of finished UserRepositoryIMock.GetUserByEmail invocations
+func (mmGetUserByEmail *UserRepositoryIMock) GetUserByEmailAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetUserByEmail.afterGetUserByEmailCounter)
+}
+
+// GetUserByEmailBeforeCounter returns a count of UserRepositoryIMock.GetUserByEmail invocations
+func (mmGetUserByEmail *UserRepositoryIMock) GetUserByEmailBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetUserByEmail.beforeGetUserByEmailCounter)
+}
+
+// Calls returns a list of arguments used in each call to UserRepositoryIMock.GetUserByEmail.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetUserByEmail *mUserRepositoryIMockGetUserByEmail) Calls() []*UserRepositoryIMockGetUserByEmailParams {
+	mmGetUserByEmail.mutex.RLock()
+
+	argCopy := make([]*UserRepositoryIMockGetUserByEmailParams, len(mmGetUserByEmail.callArgs))
+	copy(argCopy, mmGetUserByEmail.callArgs)
+
+	mmGetUserByEmail.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetUserByEmailDone returns true if the count of the GetUserByEmail invocations corresponds
+// the number of defined expectations
+func (m *UserRepositoryIMock) MinimockGetUserByEmailDone() bool {
+	if m.GetUserByEmailMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.GetUserByEmailMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.GetUserByEmailMock.invocationsDone()
+}
+
+// MinimockGetUserByEmailInspect logs each unmet expectation
+func (m *UserRepositoryIMock) MinimockGetUserByEmailInspect() {
+	for _, e := range m.GetUserByEmailMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to UserRepositoryIMock.GetUserByEmail at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterGetUserByEmailCounter := mm_atomic.LoadUint64(&m.afterGetUserByEmailCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetUserByEmailMock.defaultExpectation != nil && afterGetUserByEmailCounter < 1 {
+		if m.GetUserByEmailMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to UserRepositoryIMock.GetUserByEmail at\n%s", m.GetUserByEmailMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to UserRepositoryIMock.GetUserByEmail at\n%s with params: %#v", m.GetUserByEmailMock.defaultExpectation.expectationOrigins.origin, *m.GetUserByEmailMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetUserByEmail != nil && afterGetUserByEmailCounter < 1 {
+		m.t.Errorf("Expected call to UserRepositoryIMock.GetUserByEmail at\n%s", m.funcGetUserByEmailOrigin)
+	}
+
+	if !m.GetUserByEmailMock.invocationsDone() && afterGetUserByEmailCounter > 0 {
+		m.t.Errorf("Expected %d calls to UserRepositoryIMock.GetUserByEmail at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.GetUserByEmailMock.expectedInvocations), m.GetUserByEmailMock.expectedInvocationsOrigin, afterGetUserByEmailCounter)
+	}
+}
+
 type mUserRepositoryIMockUpdateUser struct {
 	optional           bool
 	mock               *UserRepositoryIMock
@@ -1515,6 +1868,8 @@ func (m *UserRepositoryIMock) MinimockFinish() {
 
 			m.MinimockGetUserInspect()
 
+			m.MinimockGetUserByEmailInspect()
+
 			m.MinimockUpdateUserInspect()
 		}
 	})
@@ -1542,5 +1897,6 @@ func (m *UserRepositoryIMock) minimockDone() bool {
 		m.MinimockCreateUserDone() &&
 		m.MinimockDeleteUserDone() &&
 		m.MinimockGetUserDone() &&
+		m.MinimockGetUserByEmailDone() &&
 		m.MinimockUpdateUserDone()
 }
