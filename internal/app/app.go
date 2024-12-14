@@ -11,6 +11,7 @@ import (
 	descUser "github.com/sSmok/auth/pkg/user_v1"
 	"github.com/sSmok/platform_common/pkg/closer"
 	"github.com/sSmok/platform_common/pkg/config"
+	platformInterceptor "github.com/sSmok/platform_common/pkg/interceptor"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -80,7 +81,7 @@ func (app *App) initContainer(_ context.Context) error {
 }
 
 func (app *App) initGRPCSever(ctx context.Context) error {
-	app.grpcServer = grpc.NewServer()
+	app.grpcServer = grpc.NewServer(grpc.UnaryInterceptor(platformInterceptor.Log))
 	reflection.Register(app.grpcServer)
 	descUser.RegisterUserV1Server(app.grpcServer, app.container.UserAPI(ctx))
 	descAccess.RegisterAccessV1Server(app.grpcServer, app.container.AccessAPI(ctx))
