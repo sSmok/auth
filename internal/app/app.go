@@ -9,6 +9,8 @@ import (
 	"time"
 
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sSmok/auth/internal/interceptor"
 	"github.com/sSmok/auth/internal/metric"
@@ -18,9 +20,12 @@ import (
 	"github.com/sSmok/platform_common/pkg/closer"
 	"github.com/sSmok/platform_common/pkg/config"
 	platformInterceptor "github.com/sSmok/platform_common/pkg/interceptor"
+	"github.com/sSmok/platform_common/pkg/tracing"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
+
+const serviceName = "auth-service"
 
 var configPath string
 
@@ -67,6 +72,7 @@ func (app *App) initDeps(ctx context.Context) error {
 	deps := []func(context.Context) error{
 		app.initConfig,
 		app.initContainer,
+		app.initTracing,
 		app.initMetric,
 		app.initGRPCSever,
 	}
@@ -94,8 +100,16 @@ func (app *App) initContainer(_ context.Context) error {
 	return nil
 }
 
+func (app *App) initTracing(_ context.Context) error {
+	return tracing.Init(serviceName)
+}
+
 func (app *App) initGRPCSever(ctx context.Context) error {
-	chain := grpcMiddleware.ChainUnaryServer(interceptor.MetricsInterceptor, platformInterceptor.Log)
+	chain := grpcMiddleware.ChainUnaryServer(
+		interceptor.MetricsInterceptor,
+		platformInterceptor.Log,
+		otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
+	)
 	app.grpcServer = grpc.NewServer(grpc.UnaryInterceptor(chain))
 	reflection.Register(app.grpcServer)
 	descUser.RegisterUserV1Server(app.grpcServer, app.container.UserAPI(ctx))
@@ -104,6 +118,7 @@ func (app *App) initGRPCSever(ctx context.Context) error {
 
 	return nil
 }
+
 func (app *App) initMetric(ctx context.Context) error {
 	return metric.Init(ctx)
 }
