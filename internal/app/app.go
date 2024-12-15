@@ -5,7 +5,13 @@ import (
 	"flag"
 	"log"
 	"net"
+	"net/http"
+	"time"
 
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sSmok/auth/internal/interceptor"
+	"github.com/sSmok/auth/internal/metric"
 	descAccess "github.com/sSmok/auth/pkg/access_v1"
 	descAuth "github.com/sSmok/auth/pkg/auth_v1"
 	descUser "github.com/sSmok/auth/pkg/user_v1"
@@ -47,6 +53,13 @@ func (app *App) Run() error {
 		closer.Wait()
 	}()
 
+	go func() {
+		err := runPrometheus()
+		if err != nil {
+			log.Fatalf("failed to run prometheus: %v", err)
+		}
+	}()
+
 	return app.runGRPCServer()
 }
 
@@ -54,6 +67,7 @@ func (app *App) initDeps(ctx context.Context) error {
 	deps := []func(context.Context) error{
 		app.initConfig,
 		app.initContainer,
+		app.initMetric,
 		app.initGRPCSever,
 	}
 
@@ -81,13 +95,17 @@ func (app *App) initContainer(_ context.Context) error {
 }
 
 func (app *App) initGRPCSever(ctx context.Context) error {
-	app.grpcServer = grpc.NewServer(grpc.UnaryInterceptor(platformInterceptor.Log))
+	chain := grpcMiddleware.ChainUnaryServer(interceptor.MetricsInterceptor, platformInterceptor.Log)
+	app.grpcServer = grpc.NewServer(grpc.UnaryInterceptor(chain))
 	reflection.Register(app.grpcServer)
 	descUser.RegisterUserV1Server(app.grpcServer, app.container.UserAPI(ctx))
 	descAccess.RegisterAccessV1Server(app.grpcServer, app.container.AccessAPI(ctx))
 	descAuth.RegisterAuthV1Server(app.grpcServer, app.container.AuthAPI(ctx))
 
 	return nil
+}
+func (app *App) initMetric(ctx context.Context) error {
+	return metric.Init(ctx)
 }
 
 func (app *App) runGRPCServer() error {
@@ -100,6 +118,26 @@ func (app *App) runGRPCServer() error {
 	log.Printf("GRPC server is running on %s", app.container.GRPCConfig().Address())
 
 	if err = app.grpcServer.Serve(lis); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func runPrometheus() error {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	prometheusServer := &http.Server{
+		Addr:              "localhost:2112",
+		Handler:           mux,
+		ReadHeaderTimeout: 3 * time.Second,
+	}
+
+	log.Printf("Prometheus server is running on %s", "localhost:2112")
+
+	err := prometheusServer.ListenAndServe()
+	if err != nil {
 		return err
 	}
 
